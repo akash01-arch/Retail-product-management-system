@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Retail Product Management System
 
 A portfolio project for a fresher-level Python / FastAPI developer. It provides product and category CRUD, inventory summary metrics, server-side search and pagination, and CSV export.
@@ -170,3 +171,7 @@ GET /products?q=mouse&low_stock=true&skip=0&limit=20
 ## Before presenting this as production-ready
 
 This is a stronger portfolio / fresher project, not a fully production-hardened retail system. Next improvements should include user authentication and role-based permissions, stock movement history instead of directly editing stock, audit logging, structured application logging, database backups, CI/CD, Docker deployment, and production secret management. Do not claim these features are implemented until you build and test them.
+=======
+# retail-inventory-management-system
+A full-stack Retail Inventory Management System built with Python, FastAPI, PostgreSQL, SQLAlchemy, HTML, CSS, and JavaScript. Features product and category CRUD, inventory dashboard, low-stock monitoring, search, and CSV reporting.
+>>>>>>> 24e0843ca446ebaaef902045ec0fdf57c2654a4e
