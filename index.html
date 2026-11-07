@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Retail inventory and product management dashboard">
+  <title>Retail ERP | Product Management</title>
+  <style>
+    :root {
+      --navy: #172235; --navy-light: #26364f; --blue: #2563eb;
+      --green: #15803d; --red: #dc2626; --muted: #64748b;
+      --surface: #fff; --background: #f1f5f9; --border: #dbe2ea;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; color: #172033; background: var(--background); }
+    .sidebar { width: 240px; position: fixed; inset: 0 auto 0 0; padding: 22px 14px; color: #fff; background: var(--navy); }
+    .logo { padding: 8px 10px 24px; text-align: center; font-size: 23px; font-weight: 700; border-bottom: 1px solid #3b475a; }
+    .menu { margin-top: 22px; }
+    .menu a { display: block; margin: 5px 0; padding: 12px 14px; color: #e2e8f0; text-decoration: none; border-radius: 7px; }
+    .menu a:hover, .menu a:focus-visible { background: var(--navy-light); }
+    .main { width: calc(100% - 240px); margin-left: 240px; padding: 26px; }
+    .header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    h1 { margin: 0; font-size: 27px; } h2 { margin: 0 0 16px; font-size: 20px; }
+    h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+    .subtext { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+    .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+    .card, .panel { padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: 11px; box-shadow: 0 2px 7px rgba(15,23,42,.04); }
+    .metric { margin: 0; font-size: 27px; font-weight: 700; overflow-wrap: anywhere; }
+    .panel { margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    label { display: block; margin-bottom: 5px; font-size: 12px; color: #475569; font-weight: 600; }
+    input, select { width: 100%; min-width: 0; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #172033; font: inherit; }
+    input:focus, select:focus, button:focus-visible { outline: 2px solid #bfdbfe; outline-offset: 1px; border-color: var(--blue); }
+    .field { min-width: 0; }
+    .actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+    button { padding: 10px 14px; border: 0; border-radius: 7px; color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+    button:hover { opacity: .88; } button:disabled { opacity: .55; cursor: not-allowed; }
+    .btn-save { background: var(--green); } .btn-clear { background: #64748b; }
+    .btn-edit { background: var(--blue); } .btn-delete { background: var(--red); }
+    .btn-view { background: #475569; } .btn-small { padding: 7px 9px; margin: 2px; }
+    .category-row { display: flex; align-items: end; gap: 10px; max-width: 560px; }
+    .category-row .field { flex: 1; }
+    .search-row { display: flex; justify-content: space-between; align-items: end; gap: 12px; margin-bottom: 14px; }
+    .search-row input { max-width: 330px; }
+    .table-wrap { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 760px; }
+    th, td { padding: 11px 10px; border-bottom: 1px solid var(--border); text-align: left; font-size: 13px; white-space: nowrap; }
+    th { background: #f8fafc; color: #475569; font-weight: 700; }
+    tbody tr:hover { background: #f8fafc; }
+    .status { display: inline-block; padding: 4px 8px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .status-low { color: #991b1b; background: #fee2e2; } .status-ok { color: #166534; background: #dcfce7; }
+    .message { display: none; margin: 0 0 16px; padding: 11px 13px; border-radius: 7px; font-size: 13px; }
+    .message.show { display: block; } .message.error { color: #991b1b; background: #fee2e2; }
+    .message.success { color: #166534; background: #dcfce7; }
+    .empty { padding: 24px; text-align: center; color: var(--muted); }
+    .pagination { display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 14px; }
+    .pagination span { color: var(--muted); font-size: 13px; }
+    .api-link { color: var(--blue); font-size: 13px; text-decoration: none; }
+    dialog { width: min(620px, calc(100% - 30px)); max-height: 80vh; padding: 22px; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 15px 50px rgba(15,23,42,.25); }
+    dialog::backdrop { background: rgba(15,23,42,.55); }
+    dialog pre { overflow: auto; padding: 14px; border-radius: 8px; background: #f8fafc; font-size: 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+    @media (max-width: 1100px) { .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (max-width: 720px) {
+      .sidebar { position: static; width: 100%; height: auto; }
+      .logo { padding-bottom: 14px; }
+      .menu { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+      .menu a { padding: 8px 10px; font-size: 13px; }
+      .main { width: 100%; margin: 0; padding: 16px; }
+      .header { align-items: flex-start; }
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .card { padding: 14px; } .metric { font-size: 21px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .category-row, .search-row { align-items: stretch; flex-direction: column; }
+      .search-row input { max-width: none; }
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="logo">Retail ERP</div>
+    <nav class="menu" aria-label="Main navigation">
+      <a href="#dashboard">Dashboard</a>
+      <a href="#categories">Categories</a>
+      <a href="#products">Products</a>
+      <a href="#reports">Inventory Reports</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div class="header" id="dashboard">
+      <div>
+        <h1>Retail Product Management</h1>
+        <p class="subtext">Manage products, categories and inventory.</p>
+        <a class="api-link" href="http://127.0.0.1:8000/docs" target="_blank" rel="noopener">Open API documentation</a>
+      </div>
+      <button class="btn-view" id="refreshButton" type="button">Refresh Data</button>
+    </div>
+
+    <div id="message" class="message" role="status" aria-live="polite"></div>
+
+    <section class="cards" aria-label="Inventory summary">
+      <div class="card"><h3>Total Products</h3><p class="metric" id="totalProducts">0</p></div>
+      <div class="card"><h3>Total Stock Units</h3><p class="metric" id="totalStock">0</p></div>
+      <div class="card"><h3>Inventory Value</h3><p class="metric" id="inventoryValue">₹0</p></div>
+      <div class="card"><h3>Low-stock Products</h3><p class="metric" id="lowStock">0</p></div>
+    </section>
+
+    <section class="panel" id="categories">
+      <h2>Category Management</h2>
+      <p class="subtext">Create and manage product categories.</p>
+      <form id="categoryForm" class="category-row" style="margin-top:14px">
+        <div class="field">
+          <label for="newCategory">New Category Name</label>
+          <input id="newCategory" type="text" maxlength="100" placeholder="Example: Electronics" required>
+        </div>
+        <button class="btn-save" id="addCategoryButton" type="submit">Add Category</button>
+      </form>
+      <div class="table-wrap" style="margin-top:18px">
+        <table style="min-width:300px">
+          <thead><tr><th>ID</th><th>Category Name</th><th>Action</th></tr></thead>
+          <tbody id="categoryRows"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel" id="products">
+      <h2 id="formTitle">Add Product</h2>
+      <form id="productForm">
+        <input id="id" type="hidden">
+        <div class="form-grid">
+          <div class="field"><label for="sku">SKU</label><input id="sku" minlength="3" maxlength="50" placeholder="SKU-1001" required></div>
+          <div class="field"><label for="barcode">Barcode</label><input id="barcode" minlength="3" maxlength="100" placeholder="Barcode" required></div>
+          <div class="field"><label for="name">Product Name</label><input id="name" maxlength="100" placeholder="Product name" required></div>
+          <div class="field"><label for="category_id">Category</label><select id="category_id" required><option value="">Select a category</option></select></div>
+          <div class="field"><label for="price">Price (₹)</label><input id="price" type="number" min="0.01" max="9999999999.99" step="0.01" placeholder="0.00" required></div>
+          <div class="field"><label for="stock">Stock Quantity</label><input id="stock" type="number" min="0" step="1" placeholder="0" required></div>
+          <div class="field"><label for="reorder_level">Reorder Level</label><input id="reorder_level" type="number" min="0" step="1" value="10" required></div>
+        </div>
+        <div class="actions">
+          <button class="btn-save" id="saveButton" type="submit">Save Product</button>
+          <button class="btn-clear" id="clearButton" type="button">Clear Form</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="search-row">
+        <div><h2 style="margin-bottom:4px">Products</h2><p class="subtext">Search is applied on the server.</p></div>
+        <input id="searchText" type="search" placeholder="Search name, SKU or barcode" aria-label="Search products">
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>SKU</th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Reorder Level</th><th>Actions</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button class="btn-view" id="previousPageButton" type="button" disabled>Previous</button>
+        <span id="pageInfo">Page 1 of 1</span>
+        <button class="btn-view" id="nextPageButton" type="button" disabled>Next</button>
+      </div>
+    </section>
+
+    <section class="panel" id="reports">
+      <div class="search-row">
+        <div><h2 style="margin-bottom:4px">Inventory Report</h2><p class="subtext">Preview of the current product page. CSV export includes all matching records.</p></div>
+        <button class="btn-view" id="downloadButton" type="button">Download CSV Report</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Product</th><th>SKU</th><th>Category</th><th>Unit Price</th><th>Stock</th><th>Inventory Value</th><th>Status</th></tr></thead>
+          <tbody id="reportRows"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="detailsDialog">
+    <div class="dialog-head"><h2>Product Details</h2><button class="btn-clear" id="closeDetailsButton" type="button">Close</button></div>
+    <pre id="detailsContent"></pre>
+  </dialog>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
