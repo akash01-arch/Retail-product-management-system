@@ -1,50 +1,49 @@
-<<<<<<< HEAD
-# Retail Product Management System
+# Retail Inventory Management System
 
-A portfolio project for a fresher-level Python / FastAPI developer. It provides product and category CRUD, inventory summary metrics, server-side search and pagination, and CSV export.
+A full-stack web application for managing retail products, categories, and inventory. Built using Python, FastAPI, PostgreSQL, SQLAlchemy, HTML, CSS, and JavaScript.
 
-## Technology stack
+The application provides a central interface to manage product records, monitor stock levels, view inventory summaries, and export inventory reports.
 
-- **Backend:** Python 3.10+, FastAPI, Pydantic v2
-- **Database:** PostgreSQL, SQLAlchemy 2.x
-- **Migrations:** Alembic
-- **Frontend:** HTML, CSS and vanilla JavaScript
-- **Testing:** pytest and FastAPI TestClient
+## Features
 
-## Main features
+- **Product Management:** Add, view, update, and delete products.
+- **Category Management:** Create and manage product categories.
+- **Inventory Dashboard:** View total products, total stock units, inventory value, and low-stock products.
+- **Product Search:** Search products by name, SKU, barcode, or category.
+- **Stock Monitoring:** Identify products that have reached or fallen below their reorder level.
+- **Inventory Report:** View product-wise inventory details and stock status.
+- **CSV Export:** Download inventory data as a CSV file.
+- **Database Integration:** Store and manage product and category information using PostgreSQL.
+- **REST API:** Handle frontend requests through FastAPI endpoints.
 
-- Create, view, update and delete products.
-- Create and delete categories. A category cannot be deleted while products use it.
-- Validate required fields, numeric ranges and duplicate SKU / barcode values.
-- Store prices as `NUMERIC(12, 2)` / Python `Decimal` rather than floating-point values.
-- Search by product name, SKU or barcode on the server.
-- Paginate product results (20 records per page; API maximum is 100).
-- View dashboard metrics calculated by the API across the full inventory.
-- Export all matching inventory records to CSV, not only the current browser page.
-- Keep secrets in `.env`, which is excluded from Git.
-- Manage database schema changes using Alembic migrations.
+## Technologies Used
 
-## Project structure
+| Technology | Purpose |
+|---|---|
+| Python | Backend development |
+| FastAPI | REST API development |
+| PostgreSQL | Relational database |
+| SQLAlchemy | Database ORM |
+| Pydantic | Data validation |
+| HTML5 | Frontend structure |
+| CSS3 | Frontend styling |
+| JavaScript | Frontend functionality |
+| Git & GitHub | Version control |
+
+## Project Structure
 
 ```text
-retail-crud/
+retail-inventory-management-system/
+│
 ├── app/
-│   ├── routers/
-│   │   ├── categories.py
-│   │   ├── products.py
-│   │   └── reports.py
-│   ├── core.py
-│   ├── database.py
-│   ├── main.py
-│   ├── models.py
-│   └── schemas.py
+│   └── Backend application modules
+│
 ├── migrations/
-│   ├── versions/0001_initial_schema.py
-│   ├── env.py
-│   └── script.py.mako
+│   └── Database migration files
+│
 ├── tests/
-│   ├── conftest.py
-│   └── test_api.py
+│   └── API test files
+│
 ├── .env.example
 ├── .gitignore
 ├── alembic.ini
@@ -55,39 +54,84 @@ retail-crud/
 └── README.md
 ```
 
-## Windows PowerShell setup
+## Database Design
 
-Run these commands from the project root directory (the directory that contains `main.py` and `requirements.txt`).
+The application uses PostgreSQL with two main entities:
 
-### 1. Create and activate a virtual environment
+**1. Categories**
+
+- `id` – Category ID (Primary Key)
+- `name` – Category name
+
+**2. Products**
+
+- `id` – Product ID (Primary Key)
+- `sku` – Stock Keeping Unit
+- `barcode` – Product barcode
+- `name` – Product name
+- `category_id` – Category reference (Foreign Key)
+- `price` – Product price
+- `stock` – Available stock quantity
+- `reorder_level` – Minimum stock threshold
+- `created_at` – Record creation date
+- `updated_at` – Last update date
+
+Each product belongs to a category. A category cannot be deleted while products are assigned to it.
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/` | API welcome message |
+| GET | `/health` | Check API status |
+| POST | `/categories` | Create a category |
+| GET | `/categories` | Retrieve categories |
+| DELETE | `/categories/{category_id}` | Delete a category |
+| POST | `/products` | Add a product |
+| GET | `/products` | Retrieve products |
+| GET | `/products/{product_id}` | Retrieve a product by ID |
+| PUT | `/products/{product_id}` | Update a product |
+| DELETE | `/products/{product_id}` | Delete a product |
+
+## Installation and Setup
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/akash01-arch/retail-inventory-management-system.git
+```
+
+```bash
+cd retail-inventory-management-system
+```
+
+### 2. Create a virtual environment
 
 ```powershell
-py -3 -m venv .venv
+python -m venv .venv
+```
+
+Activate it:
+
+```powershell
 .\.venv\Scripts\Activate.ps1
 ```
 
-If PowerShell blocks activation, you can skip activation and call the environment's Python executable directly:
+### 3. Install dependencies
 
-```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
 ```
 
-Otherwise install dependencies with:
+### 4. Create the PostgreSQL database
 
-```powershell
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-### 2. Create the PostgreSQL database
-
-Make sure PostgreSQL is running. Create a database named `retaildb` using pgAdmin or `psql`:
+Create a database named:
 
 ```sql
 CREATE DATABASE retaildb;
 ```
 
-### 3. Configure environment variables
+### 5. Configure environment variables
 
 Copy `.env.example` to `.env`:
 
@@ -95,83 +139,62 @@ Copy `.env.example` to `.env`:
 Copy-Item .env.example .env
 ```
 
-Open `.env` and replace `CHANGE_ME` with your local PostgreSQL password. Do not commit `.env` to Git. If your password contains URL-special characters such as `@`, `:`, `/` or `#`, URL-encode those characters in `DATABASE_URL`.
+Update the database connection string inside `.env` with your PostgreSQL username and password.
 
-### 4. Back up your database and apply migrations
+Do not upload your actual `.env` file to GitHub.
 
-Before applying a schema migration to a database that contains your current project data, take a backup:
+### 6. Run the backend
 
-```powershell
-pg_dump -U postgres -d retaildb -F c -f retaildb_backup.dump
-```
-
-Then run:
-
-```powershell
-python -m alembic upgrade head
-```
-
-The included initial migration detects the existing `categories` and `products` tables created by your earlier version. It keeps the existing rows, converts the old floating-point price column to `NUMERIC(12, 2)` on PostgreSQL, updates timestamp types, and adds database-level inventory checks and indexes. On a new database, it creates the tables from scratch. Review the migration and keep the backup before applying it to important data.
-
-Do not use `Base.metadata.create_all()` for normal development; make future schema changes through new Alembic migrations.
-
-### 5. Start the FastAPI backend
-
-```powershell
+```bash
 python -m uvicorn main:app --reload
 ```
 
-Backend: <http://127.0.0.1:8000>  
-Swagger API docs: <http://127.0.0.1:8000/docs>  
-Database health: <http://127.0.0.1:8000/health/db>
+Backend URL:
 
-### 6. Start the frontend
+http://127.0.0.1:8000
 
-Open a **second PowerShell terminal** in the project root and run:
+API documentation:
 
-```powershell
+http://127.0.0.1:8000/docs
+
+### 7. Run the frontend
+
+Open a second terminal in the project root:
+
+```bash
 python -m http.server 5500
 ```
 
-Open <http://127.0.0.1:5500>. Serving the page through a local HTTP server avoids browser restrictions that can occur when opening `index.html` directly as a `file://` URL.
+Open the application in your browser:
 
-## Run tests
+http://127.0.0.1:5500
 
-The automated tests use an isolated in-memory SQLite database, so they do not modify your PostgreSQL data.
+## Inventory Calculations
 
-```powershell
-python -m pytest -v
-```
+The dashboard uses the following calculations:
 
-## Important API endpoints
+**Total Inventory Value**
 
-| Method | Endpoint | Purpose |
-|---|---|---|
-| GET | `/health` | Basic application health |
-| GET | `/health/db` | Database connection health |
-| POST | `/categories` | Create category |
-| GET | `/categories` | List categories |
-| DELETE | `/categories/{category_id}` | Delete unused category |
-| POST | `/products` | Create product |
-| GET | `/products` | Search / filter / paginate products |
-| GET | `/products/{product_id}` | Get one product |
-| PUT | `/products/{product_id}` | Update product fields |
-| DELETE | `/products/{product_id}` | Delete product |
-| GET | `/reports/summary` | Dashboard inventory metrics |
-| GET | `/reports/inventory.csv` | Download inventory CSV |
+Unit Price × Available Stock
 
-Product list query parameters: `q`, `category_id`, `low_stock`, `skip`, and `limit`.
+**Low-Stock Identification**
 
-Example:
+Available Stock ≤ Reorder Level
 
-```text
-GET /products?q=mouse&low_stock=true&skip=0&limit=20
-```
+**Total Stock Units**
 
-## Before presenting this as production-ready
+Sum of the stock quantities of all products.
 
-This is a stronger portfolio / fresher project, not a fully production-hardened retail system. Next improvements should include user authentication and role-based permissions, stock movement history instead of directly editing stock, audit logging, structured application logging, database backups, CI/CD, Docker deployment, and production secret management. Do not claim these features are implemented until you build and test them.
-=======
-# retail-inventory-management-system
-A full-stack Retail Inventory Management System built with Python, FastAPI, PostgreSQL, SQLAlchemy, HTML, CSS, and JavaScript. Features product and category CRUD, inventory dashboard, low-stock monitoring, search, and CSV reporting.
->>>>>>> 24e0843ca446ebaaef902045ec0fdf57c2654a4e
+## Project Purpose
+
+This project was developed to gain practical experience in full-stack application development, REST API development, database integration, and inventory management.
+
+It demonstrates the integration of a frontend application with a Python backend and a PostgreSQL relational database.
+
+## Author
+
+**Akash More**
+
+BCA Data Science Student | Aspiring Software Developer
+
+GitHub: https://github.com/akash01-arch
