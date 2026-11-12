@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101828" />
+  <title>RetailOS | Management Suite</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div id="loginScreen" class="login-screen hidden">
+    <div class="login-art">
+      <div class="login-brand"><span class="brand-mark">R</span><span>RetailOS</span></div>
+      <div class="login-copy">
+        <span class="eyebrow">RETAIL OPERATIONS PLATFORM</span>
+        <h1>One workspace.<br />Every operation.</h1>
+        <p>Manage products, inventory, production and sales with a single source of truth.</p>
+      </div>
+      <div class="login-foot">Inventory clarity for growing businesses.</div>
+    </div>
+    <div class="login-panel">
+      <form id="loginForm" class="login-form">
+        <div class="mobile-brand"><span class="brand-mark">R</span><b>RetailOS</b></div>
+        <span class="eyebrow">WELCOME BACK</span>
+        <h2>Sign in to your workspace</h2>
+        <p class="muted">Enter your account details to continue.</p>
+        <label for="loginUsername">Username</label>
+        <input id="loginUsername" name="username" autocomplete="username" required placeholder="Enter username" />
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required placeholder="Enter password" />
+        <div id="loginError" class="form-error hidden"></div>
+        <button class="btn btn-primary btn-wide" type="submit">Sign in <span>→</span></button>
+        <p class="login-hint">Your administrator creates and manages team accounts.</p>
+      </form>
+    </div>
+  </div>
+
+  <div id="appShell" class="app-shell hidden">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#dashboard"><span class="brand-mark">R</span><span>RetailOS<small>MANAGEMENT SUITE</small></span></a>
+      <div class="workspace-label">WORKSPACE</div>
+      <nav id="mainNav" class="main-nav">
+        <button class="nav-link active" data-page="dashboard"><span class="nav-icon">▦</span>Overview</button>
+        <div class="nav-section">CATALOGUE</div>
+        <button class="nav-link" data-page="products"><span class="nav-icon">▤</span>Products</button>
+        <button class="nav-link" data-page="categories"><span class="nav-icon">◇</span>Categories</button>
+        <div class="nav-section">OPERATIONS</div>
+        <button class="nav-link" data-page="production"><span class="nav-icon">⚙</span>Production</button>
+        <button class="nav-link" data-page="sales"><span class="nav-icon">↗</span>Sales</button>
+        <button class="nav-link" data-page="inventory"><span class="nav-icon">▣</span>Inventory</button>
+        <div class="nav-section">BUSINESS</div>
+        <button class="nav-link" data-page="customers"><span class="nav-icon">♙</span>Customers</button>
+        <button class="nav-link" data-page="suppliers"><span class="nav-icon">♧</span>Suppliers</button>
+        <button class="nav-link" data-page="reports"><span class="nav-icon">▥</span>Reports</button>
+        <button class="nav-link admin-only" data-page="users"><span class="nav-icon">♧</span>Team & access</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="help-card"><div class="help-icon">?</div><b>Need a hand?</b><p>Review the setup guide for help with your workspace.</p><a href="/docs" target="_blank" rel="noreferrer">API documentation ↗</a></div>
+        <div class="sidebar-version">RETAILOS <span>v2.0</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button id="mobileMenuButton" class="icon-button mobile-menu" aria-label="Toggle navigation">☰</button>
+        <div class="breadcrumbs"><span>Workspace</span><i>/</i><b id="breadcrumbCurrent">Overview</b></div>
+        <div class="top-actions">
+          <span class="system-status"><i></i> System operational</span>
+          <button class="icon-button" id="changePasswordButton" title="Change password">⌑</button>
+          <div class="user-menu"><div class="avatar" id="userAvatar">A</div><div class="user-meta"><b id="userName">Administrator</b><small id="userRole">ADMIN</small></div><button id="logoutButton" class="logout-button" title="Sign out">↪</button></div>
+        </div>
+      </header>
+      <section class="page-wrap">
+        <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+        <div id="pageContent"></div>
+      </section>
+      <footer class="footer"><span>RetailOS · Operations workspace</span><span>Data is stored in your PostgreSQL database</span></footer>
+    </main>
+  </div>
+
+  <dialog id="appModal" class="app-modal"><div class="modal-head"><div><span class="eyebrow" id="modalEyebrow">WORKSPACE</span><h2 id="modalTitle">Create record</h2></div><button class="icon-button" id="modalClose" aria-label="Close">×</button></div><div id="modalBody"></div></dialog>
+  <script src="/static/app.js" defer></script>
+</body>
+</html>

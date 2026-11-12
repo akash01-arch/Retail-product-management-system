@@ -1,200 +1,164 @@
-# Retail Inventory Management System
+# RetailOS — Product & Inventory Management System
 
-A full-stack web application for managing retail products, categories, and inventory. Built using Python, FastAPI, PostgreSQL, SQLAlchemy, HTML, CSS, and JavaScript.
+A full-stack upgrade of the existing Product Management System, retaining the existing FastAPI + PostgreSQL stack and the core `categories` and `products` records.
 
-The application provides a central interface to manage product records, monitor stock levels, view inventory summaries, and export inventory reports.
+## Modules included
 
-## Features
+- **Secure sign-in:** JWT sessions, Argon2 password hashing, change-password screen.
+- **Role-based access:** `admin`, `manager`, and `staff`.
+- **Dashboard:** product count, stock units, inventory valuation, low-stock count, today's sales/production, recent sales and a 7-day revenue chart.
+- **Products and categories:** create, read, update, delete (deletion is blocked when history or product references exist).
+- **Production:** record a production batch; quantity is added to current product stock.
+- **Sales:** record sale, customer, quantity and payment; stock is reduced automatically after checking availability.
+- **Inventory:** current stock, reorder thresholds, manual adjustments and a stock movement ledger.
+- **Business directory:** customers and suppliers.
+- **Reports:** stock valuation, sales/production summary, 14-day revenue trend and CSV exports.
+- **API documentation:** Swagger UI at `/docs`.
 
-- **Product Management:** Add, view, update, and delete products.
-- **Category Management:** Create and manage product categories.
-- **Inventory Dashboard:** View total products, total stock units, inventory value, and low-stock products.
-- **Product Search:** Search products by name, SKU, barcode, or category.
-- **Stock Monitoring:** Identify products that have reached or fallen below their reorder level.
-- **Inventory Report:** View product-wise inventory details and stock status.
-- **CSV Export:** Download inventory data as a CSV file.
-- **Database Integration:** Store and manage product and category information using PostgreSQL.
-- **REST API:** Handle frontend requests through FastAPI endpoints.
-
-## Technologies Used
-
-| Technology | Purpose |
-|---|---|
-| Python | Backend development |
-| FastAPI | REST API development |
-| PostgreSQL | Relational database |
-| SQLAlchemy | Database ORM |
-| Pydantic | Data validation |
-| HTML5 | Frontend structure |
-| CSS3 | Frontend styling |
-| JavaScript | Frontend functionality |
-| Git & GitHub | Version control |
-
-## Project Structure
+## Project structure
 
 ```text
-retail-inventory-management-system/
-│
-├── app/
-│   └── Backend application modules
-│
-├── migrations/
-│   └── Database migration files
-│
-├── tests/
-│   └── API test files
-│
-├── .env.example
-├── .gitignore
-├── alembic.ini
-├── index.html
+retail_management_upgrade/
 ├── main.py
+├── database.py
+├── models.py
+├── schemas.py
+├── security.py
 ├── requirements.txt
-├── script.js
-└── README.md
+├── .env.example
+├── README.md
+└── static/
+    ├── index.html
+    ├── styles.css
+    └── app.js
 ```
 
-## Database Design
+## Important: protect your existing database first
 
-The application uses PostgreSQL with two main entities:
+Before replacing project files, make a backup of your current `retaildb` database using pgAdmin or `pg_dump`. This project is designed to preserve the existing `categories` and `products` tables and add new tables (`users`, `customers`, `suppliers`, `production_entries`, `sales`, and `stock_movements`). It does not intentionally drop or truncate any existing records.
 
-**1. Categories**
+The existing `categories` table is expected to have `id` and `name`. The existing `products` table is expected to have `id`, `sku`, `barcode`, `name`, `category_id`, `price`, `stock`, and `reorder_level`, matching the previous project frontend/API. If your actual database column names differ, adjust `models.py` before running this version.
 
-- `id` – Category ID (Primary Key)
-- `name` – Category name
+`Base.metadata.create_all()` creates missing tables but does not modify existing table columns. Do not use this as a substitute for a migration if your current schema is different.
 
-**2. Products**
+## Windows setup (PowerShell)
 
-- `id` – Product ID (Primary Key)
-- `sku` – Stock Keeping Unit
-- `barcode` – Product barcode
-- `name` – Product name
-- `category_id` – Category reference (Foreign Key)
-- `price` – Product price
-- `stock` – Available stock quantity
-- `reorder_level` – Minimum stock threshold
-- `created_at` – Record creation date
-- `updated_at` – Last update date
+### 1. Copy the new project files
 
-Each product belongs to a category. A category cannot be deleted while products are assigned to it.
+Copy/replace the Python files in your project root:
 
-## API Endpoints
+- `main.py`
+- `database.py`
+- `models.py`
+- `schemas.py`
+- `security.py`
+- `requirements.txt`
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/` | API welcome message |
-| GET | `/health` | Check API status |
-| POST | `/categories` | Create a category |
-| GET | `/categories` | Retrieve categories |
-| DELETE | `/categories/{category_id}` | Delete a category |
-| POST | `/products` | Add a product |
-| GET | `/products` | Retrieve products |
-| GET | `/products/{product_id}` | Retrieve a product by ID |
-| PUT | `/products/{product_id}` | Update a product |
-| DELETE | `/products/{product_id}` | Delete a product |
+Create a folder named `static` in the same project root and copy these three files into it:
 
-## Installation and Setup
+- `static/index.html`
+- `static/styles.css`
+- `static/app.js`
 
-### 1. Clone the repository
+Keep the project files together. `main.py` and `static/` must be at the same directory level.
 
-```bash
-git clone https://github.com/akash01-arch/retail-inventory-management-system.git
-```
+### 2. Configure the database and first administrator
 
-```bash
-cd retail-inventory-management-system
-```
-
-### 2. Create a virtual environment
-
-```powershell
-python -m venv .venv
-```
-
-Activate it:
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
-### 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Create the PostgreSQL database
-
-Create a database named:
-
-```sql
-CREATE DATABASE retaildb;
-```
-
-### 5. Configure environment variables
-
-Copy `.env.example` to `.env`:
+From the project root:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Update the database connection string inside `.env` with your PostgreSQL username and password.
+Open `.env` and update `DATABASE_URL` with the **same PostgreSQL database and credentials your existing project already uses**. Example format:
 
-Do not upload your actual `.env` file to GitHub.
-
-### 6. Run the backend
-
-```bash
-python -m uvicorn main:app --reload
+```text
+DATABASE_URL=postgresql+psycopg://postgres:YOUR_POSTGRES_PASSWORD@localhost:5432/retaildb
 ```
 
-Backend URL:
+Do not create a new database unless that is what you intend. If your PostgreSQL password contains special URL characters (such as `@`, `#`, `/`, or `:`), URL-encode those characters in the connection URL.
 
-http://127.0.0.1:8000
+Set a private `SECRET_KEY` and change the initial admin password in `.env`. The example values are for local setup only:
+
+```text
+SECRET_KEY=replace-this-with-a-long-random-secret-key
+INITIAL_ADMIN_USERNAME=admin
+INITIAL_ADMIN_PASSWORD=ChangeMe123!
+INITIAL_ADMIN_EMAIL=admin@example.com
+```
+
+The first admin account is created only when the `users` table is empty. If users already exist, no default account is added.
+
+### 3. Install packages
+
+Use the existing virtual environment if it is named `venv`:
+
+```powershell
+.\venv\Scripts\python.exe -m pip install --upgrade pip
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+If your virtual environment has another name, replace `venv` with that folder name. You do not need to activate it in PowerShell.
+
+### 4. Start the application
+
+Run from the project root:
+
+```powershell
+.\venv\Scripts\python.exe -m uvicorn main:app --reload
+```
+
+Open the application at:
+
+**http://127.0.0.1:8000**
+
+Do not open `index.html` using `file:///` and do not use Live Server for this version. FastAPI now serves the frontend and API from the same origin, so the earlier local-file and CORS connection issue is avoided.
 
 API documentation:
 
-http://127.0.0.1:8000/docs
+**http://127.0.0.1:8000/docs**
 
-### 7. Run the frontend
+### 5. First sign-in
 
-Open a second terminal in the project root:
+Use the username and password configured in `.env` (the example values are `admin` and `ChangeMe123!`). Change the password from the key-shaped account button in the top bar immediately after signing in.
 
-```bash
-python -m http.server 5500
-```
+Create additional accounts from **Team & access**:
 
-Open the application in your browser:
+| Role | Permissions |
+|---|---|
+| Admin | Full access, user administration, catalogue and operations |
+| Manager | Catalogue, categories, inventory adjustments, suppliers and operations |
+| Staff | Read catalogue/inventory; create production entries and sales; manage customers |
 
-http://127.0.0.1:5500
+## How stock is updated
 
-## Inventory Calculations
+- Creating a product can set opening stock. An opening movement is written to the stock ledger when opening stock is greater than zero.
+- Recording production increases the product's stock and writes a production movement.
+- Recording a sale checks available stock, reduces product stock and writes a sale movement in the same database transaction.
+- A manual stock adjustment is restricted to Admin/Manager and requires a reason.
+- Products with production, sales or stock movement history cannot be deleted, preserving report accuracy.
 
-The dashboard uses the following calculations:
+## API routes
 
-**Total Inventory Value**
+All business routes require a bearer token, obtained from `POST /api/auth/login`.
 
-Unit Price × Available Stock
+| Module | Routes |
+|---|---|
+| Authentication | `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/change-password` |
+| Users | `GET /api/users`, `POST /api/users`, `PATCH /api/users/{id}/deactivate` |
+| Categories | `GET/POST /api/categories`, `DELETE /api/categories/{id}` |
+| Products | `GET/POST /api/products`, `PUT/DELETE /api/products/{id}` |
+| Production | `GET/POST /api/production` |
+| Sales | `GET/POST /api/sales` |
+| Customers | `GET/POST /api/customers`, `DELETE /api/customers/{id}` |
+| Suppliers | `GET/POST /api/suppliers`, `DELETE /api/suppliers/{id}` |
+| Inventory | `GET /api/inventory/movements`, `POST /api/inventory/adjustments` |
+| Dashboard | `GET /api/dashboard` |
+| Reports | `GET /api/reports/summary`, `/api/reports/sales-by-day`, `/api/reports/stock` |
 
-**Low-Stock Identification**
+## Notes and current boundaries
 
-Available Stock ≤ Reorder Level
-
-**Total Stock Units**
-
-Sum of the stock quantities of all products.
-
-## Project Purpose
-
-This project was developed to gain practical experience in full-stack application development, REST API development, database integration, and inventory management.
-
-It demonstrates the integration of a frontend application with a Python backend and a PostgreSQL relational database.
-
-## Author
-
-**Akash More**
-
-BCA Data Science Student | Aspiring Software Developer
-
-GitHub: https://github.com/akash01-arch
+- This is a local business-management starter, not a production deployment recipe. Before public deployment, use HTTPS, a strong secret key, environment-based secrets, database backups, and a production server configuration.
+- User sessions are stored in the browser's session storage and expire according to `ACCESS_TOKEN_EXPIRE_MINUTES`.
+- This version has customer and supplier directories, but does not yet include purchase orders, supplier invoices, tax/GST invoices, multi-branch stock, barcode scanning hardware, or online payments.
+- No existing project password or PostgreSQL credential is embedded in these files. Configure credentials only in your local `.env` file.
