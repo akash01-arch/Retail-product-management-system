@@ -1,164 +1,281 @@
 # RetailOS — Product & Inventory Management System
 
-A full-stack upgrade of the existing Product Management System, retaining the existing FastAPI + PostgreSQL stack and the core `categories` and `products` records.
+A full-stack retail operations application for managing a product catalogue, inventory, production, sales, customers, suppliers, and team access. RetailOS uses **FastAPI** and **PostgreSQL** for the backend and a responsive **HTML, CSS, and JavaScript** interface served by the same FastAPI application.
 
-## Modules included
+> This repository is a local-development / portfolio project. Review the security and database notes before exposing it to the public internet.
 
-- **Secure sign-in:** JWT sessions, Argon2 password hashing, change-password screen.
-- **Role-based access:** `admin`, `manager`, and `staff`.
-- **Dashboard:** product count, stock units, inventory valuation, low-stock count, today's sales/production, recent sales and a 7-day revenue chart.
-- **Products and categories:** create, read, update, delete (deletion is blocked when history or product references exist).
-- **Production:** record a production batch; quantity is added to current product stock.
-- **Sales:** record sale, customer, quantity and payment; stock is reduced automatically after checking availability.
-- **Inventory:** current stock, reorder thresholds, manual adjustments and a stock movement ledger.
-- **Business directory:** customers and suppliers.
-- **Reports:** stock valuation, sales/production summary, 14-day revenue trend and CSV exports.
-- **API documentation:** Swagger UI at `/docs`.
+## Features
+
+### Dashboard
+- Overview of product count, stock units, inventory value, and low-stock products.
+- Today's sales and production figures.
+- Recent sales and low-stock item summaries.
+
+### Product catalogue
+- Manage products with SKU, barcode, category, price, stock quantity, and reorder level.
+- Create, view, update, and delete products.
+- Filter the product list by category and low-stock status.
+- Prevent deletion of products that have sales, production, or stock-movement history.
+
+### Inventory and stock movements
+- View current stock and reorder thresholds.
+- Record manual stock adjustments with a reason (Admin and Manager roles).
+- Maintain a stock movement ledger for opening stock, production, sales, and manual adjustments.
+- Prevent adjustments and sales that would make available stock negative.
+
+### Production
+- Record production entries against a product.
+- Increase product stock when a production entry is recorded.
+- Review production records.
+
+### Sales
+- Record sales with product, quantity, customer, payment method, and payment status details.
+- Check available stock before completing a sale.
+- Reduce stock and record the corresponding stock movement when a sale succeeds.
+- Review sales records and sales performance.
+
+### Customers and suppliers
+- Maintain customer contact records.
+- Maintain supplier contact records.
+
+### Reports and exports
+- View sales revenue, units sold, units produced, and current stock valuation.
+- Review daily revenue trends and product-level stock status.
+- Export sales and inventory reports as CSV files from the interface.
+
+### Authentication and access control
+- Sign in using a username and password.
+- JWT bearer-token authentication for protected API endpoints.
+- Password hashing using `pwdlib`.
+- Change-password functionality.
+- Role-based access for **Admin**, **Manager**, and **Staff** accounts.
+- Admins can create team accounts and deactivate accounts.
+- The browser stores the session token in `sessionStorage`.
+
+## Technology stack
+
+| Layer | Technologies |
+|---|---|
+| Backend | Python, FastAPI, Uvicorn |
+| Database | PostgreSQL, SQLAlchemy 2.x, Psycopg 3 |
+| Validation | Pydantic v2 |
+| Authentication | JWT (`python-jose`), `pwdlib` password hashing |
+| Frontend | HTML5, CSS3, JavaScript |
+| API documentation | FastAPI Swagger UI / OpenAPI |
 
 ## Project structure
 
+The active RetailOS v2 application files live at the repository root. The repository also currently contains a nested `Retail-product-management-system/` directory from the earlier version of this project.
+
 ```text
-retail_management_upgrade/
-├── main.py
-├── database.py
-├── models.py
-├── schemas.py
-├── security.py
-├── requirements.txt
+.
+├── Retail-product-management-system/  # Earlier implementation (separate app)
+├── static/
+│   ├── index.html
+│   ├── styles.css
+│   └── app.js
 ├── .env.example
+├── .gitignore
 ├── README.md
-└── static/
-    ├── index.html
-    ├── styles.css
-    └── app.js
+├── database.py
+├── main.py
+├── models.py
+├── requirements.txt
+├── schemas.py
+└── security.py
 ```
 
-## Important: protect your existing database first
+**Run the root-level RetailOS v2 application** by following the setup instructions in this README. Its `main.py` serves the frontend from `static/index.html` and mounts the static assets under `/static`; keep `static/` beside that `main.py`. The nested directory is an earlier, separate implementation with its own entry point and README. Do not mix its setup instructions with the root-level application. If you no longer need the older version, remove the nested directory in a separate cleanup commit after backing it up.
 
-Before replacing project files, make a backup of your current `retaildb` database using pgAdmin or `pg_dump`. This project is designed to preserve the existing `categories` and `products` tables and add new tables (`users`, `customers`, `suppliers`, `production_entries`, `sales`, and `stock_movements`). It does not intentionally drop or truncate any existing records.
+## Prerequisites
 
-The existing `categories` table is expected to have `id` and `name`. The existing `products` table is expected to have `id`, `sku`, `barcode`, `name`, `category_id`, `price`, `stock`, and `reorder_level`, matching the previous project frontend/API. If your actual database column names differ, adjust `models.py` before running this version.
+- Python **3.10 or later**
+- PostgreSQL **14 or later** (or a compatible supported PostgreSQL installation)
+- Git
 
-`Base.metadata.create_all()` creates missing tables but does not modify existing table columns. Do not use this as a substitute for a migration if your current schema is different.
+## Local setup (Windows PowerShell)
 
-## Windows setup (PowerShell)
+### 1. Clone the repository
 
-### 1. Copy the new project files
+```powershell
+git clone https://github.com/akash01-arch/Retail-product-management-system.git
+cd Retail-product-management-system
+```
 
-Copy/replace the Python files in your project root:
+### 2. Create and activate a virtual environment
 
-- `main.py`
-- `database.py`
-- `models.py`
-- `schemas.py`
-- `security.py`
-- `requirements.txt`
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
-Create a folder named `static` in the same project root and copy these three files into it:
+If PowerShell blocks script activation, you can use the virtual environment's Python executable directly in the commands below:
 
-- `static/index.html`
-- `static/styles.css`
-- `static/app.js`
+```powershell
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+```
 
-Keep the project files together. `main.py` and `static/` must be at the same directory level.
+### 3. Create the PostgreSQL database
 
-### 2. Configure the database and first administrator
+Create a database named `retaildb` if you do not already have one. For example, in `psql`:
 
-From the project root:
+```sql
+CREATE DATABASE retaildb;
+```
+
+If you are using an existing database with product and category data, back it up before running the application and read the **Existing database compatibility** section below.
+
+### 4. Configure environment variables
+
+Copy the example environment file:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Open `.env` and update `DATABASE_URL` with the **same PostgreSQL database and credentials your existing project already uses**. Example format:
+Open `.env` and set values for your local PostgreSQL connection and a strong, private JWT secret:
 
-```text
+```dotenv
 DATABASE_URL=postgresql+psycopg://postgres:YOUR_POSTGRES_PASSWORD@localhost:5432/retaildb
-```
-
-Do not create a new database unless that is what you intend. If your PostgreSQL password contains special URL characters (such as `@`, `#`, `/`, or `:`), URL-encode those characters in the connection URL.
-
-Set a private `SECRET_KEY` and change the initial admin password in `.env`. The example values are for local setup only:
-
-```text
-SECRET_KEY=replace-this-with-a-long-random-secret-key
+SECRET_KEY=replace-with-a-long-random-secret-value
+ACCESS_TOKEN_EXPIRE_MINUTES=480
 INITIAL_ADMIN_USERNAME=admin
-INITIAL_ADMIN_PASSWORD=ChangeMe123!
+INITIAL_ADMIN_PASSWORD=replace-with-a-strong-unique-password
 INITIAL_ADMIN_EMAIL=admin@example.com
 ```
 
-The first admin account is created only when the `users` table is empty. If users already exist, no default account is added.
+Use your own PostgreSQL username, password, host, and database name. URL-encode special characters in the database password when required by the connection URL. Do not commit `.env` to GitHub. The repository's `.gitignore` excludes it; keep `.env.example` free of real credentials.
 
-### 3. Install packages
+The initial administrator account is created only when the `users` table is empty. The values in `.env` are used for that first account; they are not a universal login for an already-populated database. Change the initial password after signing in.
 
-Use the existing virtual environment if it is named `venv`:
-
-```powershell
-.\venv\Scripts\python.exe -m pip install --upgrade pip
-.\venv\Scripts\python.exe -m pip install -r requirements.txt
-```
-
-If your virtual environment has another name, replace `venv` with that folder name. You do not need to activate it in PowerShell.
-
-### 4. Start the application
-
-Run from the project root:
+### 5. Install dependencies
 
 ```powershell
-.\venv\Scripts\python.exe -m uvicorn main:app --reload
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-Open the application at:
+Or, if you did not activate the environment:
 
-**http://127.0.0.1:8000**
+```powershell
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
 
-Do not open `index.html` using `file:///` and do not use Live Server for this version. FastAPI now serves the frontend and API from the same origin, so the earlier local-file and CORS connection issue is avoided.
+### 6. Start the application
 
-API documentation:
+Run this from the project root (the folder containing `main.py`):
 
-**http://127.0.0.1:8000/docs**
+```powershell
+python -m uvicorn main:app --reload
+```
 
-### 5. First sign-in
+Or without activating the environment:
 
-Use the username and password configured in `.env` (the example values are `admin` and `ChangeMe123!`). Change the password from the key-shaped account button in the top bar immediately after signing in.
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn main:app --reload
+```
 
-Create additional accounts from **Team & access**:
+Open the application:
 
-| Role | Permissions |
+- **Web interface:** http://127.0.0.1:8000
+- **Swagger API documentation:** http://127.0.0.1:8000/docs
+- **OpenAPI schema:** http://127.0.0.1:8000/openapi.json
+- **Health check:** http://127.0.0.1:8000/api/health
+
+Do not open `static/index.html` directly using a `file:///` URL or a separate Live Server. FastAPI serves the frontend and API from the same origin.
+
+## User roles
+
+| Role | Typical access |
 |---|---|
-| Admin | Full access, user administration, catalogue and operations |
-| Manager | Catalogue, categories, inventory adjustments, suppliers and operations |
-| Staff | Read catalogue/inventory; create production entries and sales; manage customers |
+| **Admin** | Full application access, team account management, catalogue and operational administration. |
+| **Manager** | Product and category administration, supplier management, stock adjustments, sales and production operations. |
+| **Staff** | View catalogue and inventory, record sales and production, and work with customer records. |
 
-## How stock is updated
+The backend enforces permissions on protected endpoints; hiding a page or button in the frontend is not the only access-control mechanism.
 
-- Creating a product can set opening stock. An opening movement is written to the stock ledger when opening stock is greater than zero.
-- Recording production increases the product's stock and writes a production movement.
-- Recording a sale checks available stock, reduces product stock and writes a sale movement in the same database transaction.
-- A manual stock adjustment is restricted to Admin/Manager and requires a reason.
-- Products with production, sales or stock movement history cannot be deleted, preserving report accuracy.
+## API overview
 
-## API routes
+Protected business endpoints require an access token obtained from `POST /api/auth/login`. In Swagger UI, use the **Authorize** control and provide the bearer token.
 
-All business routes require a bearer token, obtained from `POST /api/auth/login`.
+| Module | Method and endpoint | Purpose |
+|---|---|---|
+| Health | `GET /api/health` | Check API and database connectivity. |
+| Authentication | `POST /api/auth/login` | Sign in and obtain a JWT. |
+| Authentication | `GET /api/auth/me` | Get the signed-in user. |
+| Authentication | `POST /api/auth/change-password` | Change the current user's password. |
+| Users | `GET /api/users` | List team accounts (Admin). |
+| Users | `POST /api/users` | Create a team account (Admin). |
+| Users | `PATCH /api/users/{user_id}/deactivate` | Deactivate a team account (Admin). |
+| Categories | `GET /api/categories` | List categories. |
+| Categories | `POST /api/categories` | Create a category. |
+| Categories | `DELETE /api/categories/{category_id}` | Delete an unused category. |
+| Products | `GET /api/products` | List products. |
+| Products | `POST /api/products` | Create a product. |
+| Products | `PUT /api/products/{product_id}` | Update a product. |
+| Products | `DELETE /api/products/{product_id}` | Delete a product when its history allows it. |
+| Production | `GET /api/production` | List production entries. |
+| Production | `POST /api/production` | Record a production entry. |
+| Sales | `GET /api/sales` | List sales. |
+| Sales | `POST /api/sales` | Record a sale. |
+| Customers | `GET /api/customers` | List customers. |
+| Customers | `POST /api/customers` | Create a customer. |
+| Customers | `DELETE /api/customers/{customer_id}` | Delete a customer record. |
+| Suppliers | `GET /api/suppliers` | List suppliers. |
+| Suppliers | `POST /api/suppliers` | Create a supplier. |
+| Suppliers | `DELETE /api/suppliers/{supplier_id}` | Delete a supplier record. |
+| Inventory | `GET /api/inventory/movements` | View stock movement history. |
+| Inventory | `POST /api/inventory/adjustments` | Adjust stock (Admin or Manager). |
+| Dashboard | `GET /api/dashboard` | Retrieve dashboard metrics. |
+| Reports | `GET /api/reports/summary` | Retrieve sales and production summary metrics. |
+| Reports | `GET /api/reports/sales-by-day` | Retrieve daily sales revenue for a selected number of days. |
+| Reports | `GET /api/reports/stock` | Retrieve product-level inventory valuation and stock status. |
 
-| Module | Routes |
-|---|---|
-| Authentication | `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/change-password` |
-| Users | `GET /api/users`, `POST /api/users`, `PATCH /api/users/{id}/deactivate` |
-| Categories | `GET/POST /api/categories`, `DELETE /api/categories/{id}` |
-| Products | `GET/POST /api/products`, `PUT/DELETE /api/products/{id}` |
-| Production | `GET/POST /api/production` |
-| Sales | `GET/POST /api/sales` |
-| Customers | `GET/POST /api/customers`, `DELETE /api/customers/{id}` |
-| Suppliers | `GET/POST /api/suppliers`, `DELETE /api/suppliers/{id}` |
-| Inventory | `GET /api/inventory/movements`, `POST /api/inventory/adjustments` |
-| Dashboard | `GET /api/dashboard` |
-| Reports | `GET /api/reports/summary`, `/api/reports/sales-by-day`, `/api/reports/stock` |
+For request and response schemas, validation rules, and interactive API testing, use `/docs` while the application is running.
 
-## Notes and current boundaries
+## Inventory behaviour
 
-- This is a local business-management starter, not a production deployment recipe. Before public deployment, use HTTPS, a strong secret key, environment-based secrets, database backups, and a production server configuration.
-- User sessions are stored in the browser's session storage and expire according to `ACCESS_TOKEN_EXPIRE_MINUTES`.
-- This version has customer and supplier directories, but does not yet include purchase orders, supplier invoices, tax/GST invoices, multi-branch stock, barcode scanning hardware, or online payments.
-- No existing project password or PostgreSQL credential is embedded in these files. Configure credentials only in your local `.env` file.
+- Creating a product with opening stock records an opening stock movement.
+- Recording production increases the product's stock and records a production movement.
+- Recording a sale checks available stock, decreases stock, and records a sale movement.
+- Manual stock adjustments require an authorized role and a reason.
+- Products with sales, production, or stock-movement history are protected from deletion to preserve operational records.
+
+## Existing database compatibility
+
+This version is designed to retain the existing `categories` and `products` tables. The models expect these core columns:
+
+- `categories`: `id`, `name`
+- `products`: `id`, `sku`, `barcode`, `name`, `category_id`, `price`, `stock`, `reorder_level`
+
+The application calls SQLAlchemy `Base.metadata.create_all()` during startup. This creates missing tables, but **does not alter existing table definitions or migrate existing columns**. Back up your database before running the upgraded application. If your current schema differs from the columns above, create and test an appropriate migration or update the models before starting the application. Do not assume that `create_all()` will safely migrate an older schema.
+
+## Security and deployment notes
+
+- Keep `.env` out of version control and never publish database passwords, JWT secrets, or real credentials.
+- Use a long, randomly generated `SECRET_KEY`; do not rely on a development fallback.
+- The current `database.py` in the repository includes a hard-coded fallback database URL. **Before using this repository, remove that fallback and require `DATABASE_URL` to be supplied through the environment.** If the embedded password was ever a real credential, rotate it.
+- Change the initial administrator password immediately after first sign-in.
+- The current project is intended for local development and demonstration. A public deployment should additionally use HTTPS, a production ASGI server configuration, secure secret management, database backups, logging/monitoring, and a reviewed session/token strategy.
+- The browser token is stored in `sessionStorage`; assess your threat model and use an appropriate production authentication/session design before deployment.
+
+## Current scope and limitations
+
+The repository currently includes product and category management, stock tracking, production entries, sales, customer and supplier directories, role-based team access, dashboard metrics, and CSV report exports. It does not currently document or implement purchase-order workflows, supplier invoicing, GST/tax invoicing, multi-branch inventory, barcode-scanner hardware integration, or online payment processing.
+
+## Contributing
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make and test your changes locally.
+4. Commit with a descriptive message.
+5. Open a pull request describing the change.
+
+## License
+
+No license file is currently included in this repository. Unless a license is added, all rights remain with the copyright holder; do not assume the project is open source for reuse.
+
+## Repository
+
+[https://github.com/akash01-arch/Retail-product-management-system](https://github.com/akash01-arch/Retail-product-management-system)
